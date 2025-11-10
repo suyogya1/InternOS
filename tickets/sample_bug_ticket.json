@@ -1,0 +1,7 @@
+{
+"id": 1,
+"kind": "bugfix",
+"repo_url": "file://./sample_repos/bugfix_api",
+"rubric_json": {"weights": {"ship": 0.4, "quality": 0.35, "comm": 0.15, "reliability": 0.1}},
+"time_limit": 120
+}
