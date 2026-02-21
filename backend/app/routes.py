@@ -1,18 +1,27 @@
-from fastapi import API router, Depends, HTTPSException
+import os
+import httpx
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
-import os, json, httpx
 
 from .db import get_db
 from .models import User, Ticket, Attempt, Metric, SignalSnapshot
-from .schemas import StartTicketRequest, StartTicketResponse, SubmitRequest, AttemptMetricsResponse, MetricOut, RecruiterSignal
+from .schemas import (
+    StartTicketRequest,
+    StartTicketResponse,
+    SubmitRequest,
+    AttemptMetricsResponse,
+    MetricOut,
+    RecruiterSignal,
+)
 from .utils_git import repo_clone
 from .grader import grade_attempt
 from .rubric import score_metrics
 
 router = APIRouter()
 
+
 @router.post("/tickets/start", response_model=StartTicketResponse)
+<<<<<<< HEAD
 def start_ticket(payload: StartTicketRequest, db_sess = Depends(get_db)):
     with db_sess as db:
         user = db.query(User).filter(User.handle == payload.handle).one_or_none()
@@ -28,15 +37,44 @@ def start_ticket(payload: StartTicketRequest, db_sess = Depends(get_db)):
         db.flush()
         return StartTicketResponse(attempt_id=attempt.id, repo_path=repo_path)
     
+=======
+def start_ticket(payload: StartTicketRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.handle == payload.handle).one_or_none()
+    if not user:
+        user = User(handle=payload.handle)
+        db.add(user)
+        db.flush()
+
+    ticket = db.query(Ticket).filter(Ticket.id == payload.ticket_id).one_or_none()
+    if not ticket:
+        raise HTTPException(404, "ticket not found")
+
+    repo_path = repo_clone(ticket.repo_url)
+    attempt = Attempt(user_id=user.id, ticket_id=ticket.id, repo_path=repo_path)
+    db.add(attempt)
+    db.flush()
+
+    return StartTicketResponse(attempt_id=attempt.id, repo_path=repo_path)
+
+
+>>>>>>> f84e5561832b403c971e90f3ea8b96d82309f435
 @router.post("/tickets/submit")
 def submit_attempt(payload: SubmitRequest, db: Session = Depends(get_db)):
     attempt = db.query(Attempt).filter(Attempt.id == payload.attempt_id).one_or_none()
     if not attempt:
         raise HTTPException(404, "attempt not found")
+<<<<<<< HEAD
+=======
+
+>>>>>>> f84e5561832b403c971e90f3ea8b96d82309f435
     if attempt.status not in ("in_progress", "submitted"):
         raise HTTPException(400, "attempt already graded")
 
     from datetime import datetime
+<<<<<<< HEAD
+=======
+
+>>>>>>> f84e5561832b403c971e90f3ea8b96d82309f435
     attempt.finished_at = datetime.utcnow()
     attempt.status = "submitted"
 
@@ -49,6 +87,10 @@ def submit_attempt(payload: SubmitRequest, db: Session = Depends(get_db)):
         postmortem_text=payload.postmortem_text,
     )
 
+<<<<<<< HEAD
+=======
+    # Optional n8n webhook
+>>>>>>> f84e5561832b403c971e90f3ea8b96d82309f435
     hook = os.getenv("N8N_WEBHOOK_URL")
     if hook:
         try:
@@ -63,6 +105,10 @@ def submit_attempt(payload: SubmitRequest, db: Session = Depends(get_db)):
             }
             httpx.post(hook, json=data, timeout=5)
         except Exception:
+<<<<<<< HEAD
+=======
+            # keep silent on webhook issues
+>>>>>>> f84e5561832b403c971e90f3ea8b96d82309f435
             pass
 
     return {"attempt_id": attempt.id, "scores": scores}
@@ -84,6 +130,10 @@ def recruiter_view(handle: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(404, "user not found")
 
+<<<<<<< HEAD
+=======
+    # Collect attempts and aggregate metrics (simple average for MVP)
+>>>>>>> f84e5561832b403c971e90f3ea8b96d82309f435
     rows = db.query(Attempt).filter(Attempt.user_id == user.id).all()
     all_metrics = {}
     for a in rows:
@@ -105,4 +155,9 @@ def recruiter_view(handle: str, db: Session = Depends(get_db)):
     }
 
     db.add(SignalSnapshot(user_id=user.id, snapshot_json=snapshot))
+<<<<<<< HEAD
     return RecruiterSignal(handle=handle, snapshot=snapshot)
+=======
+
+    return RecruiterSignal(handle=handle, snapshot=snapshot)
+>>>>>>> f84e5561832b403c971e90f3ea8b96d82309f435
