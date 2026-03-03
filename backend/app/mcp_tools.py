@@ -1,7 +1,7 @@
 import os
 import subprocess
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import httpx
 
 PYTHON = os.environ.get("PYTHON_BIN", "python")
@@ -22,8 +22,10 @@ def _run(cmd: List[str], cwd: str | None = None, timeout: int = 300) -> tuple[in
     return p.returncode, out, err
 
 
-def run_tests(path: str) -> Dict[str, Any]:
-    rc, out, err = _run([PYTHON, "-m", "pytest", "-q"], cwd=path, timeout=240)
+def run_tests(path: str, extra_pytest_args: Optional[List[str]] = None) -> Dict[str, Any]:
+    extra_pytest_args = extra_pytest_args or []
+    rc, out, err = _run([PYTHON, "-m", "pytest", "-q", *extra_pytest_args], cwd=path, timeout=240)
+
     passed = failed = 0
     text = out + "\n" + err
     for line in text.splitlines():
@@ -41,13 +43,16 @@ def run_tests(path: str) -> Dict[str, Any]:
                         break
             except Exception:
                 pass
+
     return {"passed": passed, "failed": failed, "raw": text, "ok": rc == 0}
 
 
-def coverage_report(path: str) -> Dict[str, Any]:
+def coverage_report(path: str, extra_pytest_args: Optional[List[str]] = None) -> Dict[str, Any]:
+    extra_pytest_args = extra_pytest_args or []
     _run([PYTHON, "-m", "coverage", "erase"], cwd=path)
-    rc, out1, err1 = _run([PYTHON, "-m", "coverage", "run", "-m", "pytest", "-q"], cwd=path, timeout=300)
+    rc, out1, err1 = _run([PYTHON, "-m", "coverage", "run", "-m", "pytest", "-q", *extra_pytest_args], cwd=path, timeout=300)
     rc2, out2, err2 = _run([PYTHON, "-m", "coverage", "report", "-m"], cwd=path)
+
     cov = 0.0
     for line in (out2 + "\n" + err2).splitlines():
         line = line.strip()
@@ -57,6 +62,7 @@ def coverage_report(path: str) -> Dict[str, Any]:
             except Exception:
                 pass
             break
+
     return {"coverage": cov, "raw": out1 + out2 + err1 + err2, "ok": rc == 0}
 
 

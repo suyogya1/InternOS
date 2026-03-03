@@ -1,0 +1,13 @@
+.venv/
+.venv13/
+__pycache__/
+*.py[cod]
+
+.env
+backend/.env
+
+*.db
+artifacts/
+
+.DS_Store
+Thumbs.db

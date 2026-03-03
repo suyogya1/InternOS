@@ -1,36 +1,26 @@
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
-from typing import Optional, Any, Dict, List
 
 
-class StartTicketRequest(BaseModel):
+class ResumeSearchResult(BaseModel):
     handle: str
-    ticket_id: int
+    name: Optional[str] = None
+    resume_id: int
+    filename: str
+    uploaded_at: str
+    overall_score: float
+    clarity_score: float
+    matched_skills: List[str]
+    missing_skills: List[str]
+    graduated: bool
+    graduation_year: Optional[int] = None
+    degrees: List[str]
+    top_strengths: List[str]
+    top_gaps: List[str]
 
 
-class StartTicketResponse(BaseModel):
-    attempt_id: int
-    repo_path: str
-
-
-class SubmitRequest(BaseModel):
-    attempt_id: int
-    pr_url: Optional[str] = None
-    standup_text: Optional[str] = None
-    postmortem_text: Optional[str] = None
-
-
-class MetricOut(BaseModel):
-    key: str
-    value: float
-    extra: Optional[Dict[str, Any]] = None
-
-
-class AttemptMetricsResponse(BaseModel):
-    attempt_id: int
-    status: str
-    metrics: List[MetricOut]
-
-
-class RecruiterSignal(BaseModel):
-    handle: str
-    snapshot: Dict[str, Any]
+class ResumeSearchResponse(BaseModel):
+    total: int
+    filters: Dict[str, Any]
+    results: List[ResumeSearchResult]
